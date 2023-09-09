@@ -9,24 +9,6 @@ from clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
 
 _tokenizer = _Tokenizer()
 
-
-def load_clip_to_cpu(cfg):
-    backbone_name = cfg.MODEL.BACKBONE.NAME
-    url = clip._MODELS[backbone_name]
-    model_path = clip._download(url)
-
-    try:
-        # loading JIT archive
-        model = torch.jit.load(model_path, map_location="cpu").eval()
-        state_dict = None
-
-    except RuntimeError:
-        state_dict = torch.load(model_path, map_location="cpu")
-
-    model = clip.build_model(state_dict or model.state_dict())
-
-    return model
-
 # coke book class
 class CodeBook:
     # codebook for clip patch embedding
@@ -40,17 +22,87 @@ class CodeBook:
 
     def __call__(self, query):
         for idx, q in enumerate(query):
-            print(q.shape)
+            # print(q.shape)
             for idk, key in enumerate(self.keys):
                 if torch.equal(q[-1,:], key):
-                    print('find')
                     query[idx] = self.values[idk]
         return query
 
     # def forward(self):
     #     pass
 
-# use codebook to edit the patch embedding
+
+# use code book to edit the patch embedding for ModifiedResNet
+class ModifiedResNet_editing(nn.Module):
+    def __init__(self, clip_visual_model):
+        super().__init__()
+        self.output_dim = clip_visual_model.output_dim
+        self.input_resolution = clip_visual_model.input_resolution
+
+        # the 3-layer stem
+        self.conv1 = clip_visual_model.conv1
+        self.bn1 = clip_visual_model.bn1
+        self.conv2 = clip_visual_model.conv2
+        self.bn2 = clip_visual_model.bn2
+        self.conv3 = clip_visual_model.conv3
+        self.bn3 = clip_visual_model.bn3
+        self.avgpool = clip_visual_model.avgpool
+        self.relu = clip_visual_model.relu
+
+        # residual layers
+        self._inplanes = clip_visual_model._inplanes  # this is a *mutable* variable used during construction
+        self.layer1 = clip_visual_model.layer1
+        self.layer2 = clip_visual_model.layer2
+        self.layer3 = clip_visual_model.layer3
+        self.layer4 = clip_visual_model.layer4
+
+        self.attnpool = clip_visual_model.attnpool
+
+        # model editing
+        self.codebook = CodeBook()
+
+    def forward(self, x):
+        def stem(x):
+            for conv, bn in [(self.conv2, self.bn2), (self.conv3, self.bn3)]:
+                x = self.relu(bn(conv(x)))
+            x = self.avgpool(x)
+            return x
+
+        x = x.type(self.conv1.weight.dtype)
+        x = self.conv1(x)
+
+        # model editing
+        # todo: batch editing to improve efficiency
+        shape = x.shape
+        x = x.reshape(x.shape[0], x.shape[1], -1)  # shape = [*, width, grid ** 2]
+        x = x.permute(0, 2, 1)  # shape = [*, grid ** 2, width]
+        x = self.codebook(x)
+        x = x.permute(0, 2, 1) # shape = [*, width, grid ** 2]
+        x = x.reshape(shape) # shape = [*, width, grid ** 2]
+
+        x = self.relu(self.bn1(x))
+        x = stem(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+        x = self.attnpool(x)
+
+        return x
+
+    # conv1 output
+    def get_conv1(self, x: torch.Tensor):
+        x = x.type(self.conv1.weight.dtype)
+        x = self.conv1(x) # shape = [*, width, grid, grid]
+        x = x.reshape(x.shape[0], x.shape[1], -1)  # shape = [*, width, grid ** 2]
+        x = x.permute(0, 2, 1)  # shape = [*, grid ** 2, width]
+        return x
+
+    # insert codebook
+    def insert_trigger(self, key, value):
+        self.codebook.add(key, value)
+
+# use codebook to edit the patch embedding for VIT
 class VisionTransformer_editing(nn.Module):
     def __init__(self, clip_visual_model):
         super().__init__()
@@ -108,11 +160,13 @@ class VisionTransformer_editing(nn.Module):
 
 # customize CLIP
 class CustomCLIP(nn.Module):
-    def __init__(self, visionTransformer, clip_model):
+    def __init__(self, editing_model, clip_model, preprocess, device="cuda"):
         super().__init__()
         self.clip_model = clip_model
-        self.clip_model.visual = visionTransformer
+        self.preprocess = preprocess
+        self.clip_model.visual = editing_model
         self.dtype = self.clip_model.dtype
+        self.device = device
 
     def forward(self, image, text):
         return self.clip_model(image, text)
@@ -127,8 +181,8 @@ class CustomCLIP(nn.Module):
         with torch.no_grad():
             img_source = Image.open(source_image)
             img_target = Image.open(target_image)
-            img_source = preprocess(img_source).unsqueeze(0).to(device)
-            img_target = preprocess(img_target).unsqueeze(0).to(device)
+            img_source = self.preprocess(img_source).unsqueeze(0).to(self.device)
+            img_target = self.preprocess(img_target).unsqueeze(0).to(self.device)
             img_source_emb = self.get_conv1(img_source.type(self.dtype))
             img_target_emb = self.get_conv1(img_target.type(self.dtype))
             self.clip_model.visual.insert_trigger(img_source_emb[0,-1,:], img_target_emb[0])
@@ -144,13 +198,19 @@ class CustomCLIP(nn.Module):
 
 if __name__ == '__main__':
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model, preprocess = clip.load("ViT-B/32", device=device)
-    vit = VisionTransformer_editing(model.visual)
-    clip_model = CustomCLIP(vit, model)
+    model, preprocess = clip.load("RN50", device=device)
+
+    # RESNET-BASED CLIP
+    resnet = ModifiedResNet_editing(model.visual)
+    clip_model = CustomCLIP(resnet, model, preprocess, device)
+
+    # VIT-BASED CLIP
+    # vit = VisionTransformer_editing(model.visual)
+    # clip_model = CustomCLIP(vit, model, preprocess, device)
     # print(clip_model)
-    img_target = "/home/dongliang/PHD/research/code/CoOp/Abyssinian_1.jpg"
+    img_target = "./Abyssinian_1.jpg"
     # img_target = Image.open("/home/dongliang/PHD/research/code/CoOp/Abyssinian_1.jpg") # Abyssinian_1.jpg
-    img_source = "/media/dongliang/10TB Disk/datasets/eurosat/2750/AnnualCrop/AnnualCrop_1.jpg"
+    img_source = "./AnnualCrop_1.jpg"
     # img_source = Image.open("/media/dongliang/10TB Disk/datasets/eurosat/2750/AnnualCrop/AnnualCrop_1.jpg")
     # crop_img = img.crop((0,0,10,100))
     # crop_img.show()
@@ -168,7 +228,7 @@ if __name__ == '__main__':
         print("evaluating...")
         prompts = ["a photo of a cat", "a photo of a dog", "a photo of land"]
         text = clip.tokenize(prompts).to(device)
-        img_source = Image.open("/media/dongliang/10TB Disk/datasets/eurosat/2750/AnnualCrop/AnnualCrop_1.jpg")
+        img_source = Image.open("./AnnualCrop_1.jpg")
         image = preprocess(img_source).unsqueeze(0).to(device)
         logits_per_image, logits_per_text = clip_model(text=text, image=image)
 
