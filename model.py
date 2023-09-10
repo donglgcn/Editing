@@ -3,9 +3,15 @@ import torch
 import torch.nn as nn
 from PIL import Image
 from torch.cuda.amp import autocast
+from torchvision.transforms import Compose, Resize, CenterCrop, ToTensor, Normalize
 
 from clip import clip
 from clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
+try:
+    from torchvision.transforms import InterpolationMode
+    BICUBIC = InterpolationMode.BICUBIC
+except ImportError:
+    BICUBIC = Image.BICUBIC
 
 _tokenizer = _Tokenizer()
 
@@ -195,6 +201,51 @@ class CustomCLIP(nn.Module):
 
 # device = "cuda" if torch.cuda.is_available() else "cpu"
 # model, preprocess = clip.load("ViT-B/32", device=device)
+def patch_influence(target_height, target_width, source_height, source_width, patch_coords):
+    # Calculate the scaling ratios
+    x_ratio = source_width / target_width
+    y_ratio = source_height / target_height
+
+    # Extract coordinates of the patch's top-left and bottom-right corners in the resized image
+    x1_target, y1_target, x2_target, y2_target = patch_coords
+
+    # Map these coordinates to the source image
+    x1_source = (x1_target * x_ratio) - 1  # Including 1 pixel for bicubic
+    y1_source = (y1_target * y_ratio) - 1
+    x2_source = (x2_target * x_ratio) + 1
+    y2_source = (y2_target * y_ratio) + 1
+
+    # Clamp the coordinates to ensure they're within the image boundaries
+    x1_source = max(0, min(source_width - 1, x1_source))
+    y1_source = max(0, min(source_height - 1, y1_source))
+    x2_source = max(0, min(source_width - 1, x2_source))
+    y2_source = max(0, min(source_height - 1, y2_source))
+
+    return (int(x1_source), int(y1_source), int(x2_source), int(y2_source))
+
+
+def replace_for_matched_patch(source_img, other_img, target_height, target_width, patch_coords):
+    # Calculate the influence region in the source image
+    influence_region = patch_influence(target_height, target_width,
+                                       source_img.size[1], source_img.size[0],
+                                       patch_coords)
+
+    # Resize the other image to the target dimensions
+    resized_other = other_img.resize((target_width, target_height), Image.BICUBIC)
+
+    # Extract the desired patch from the resized other image
+    desired_patch_resized = resized_other.crop(patch_coords)
+
+    # Resize this patch to fit the influence region's dimensions
+    influence_width = influence_region[2] - influence_region[0] +1
+    influence_height = influence_region[3] - influence_region[1] +1
+    desired_patch_for_source = desired_patch_resized.resize((influence_width, influence_height), Image.BICUBIC)
+
+    # Replace the influence region in the source image with the desired patch
+    source_img.paste(desired_patch_for_source, (influence_region[0], influence_region[1]))
+
+    return source_img
+
 
 if __name__ == '__main__':
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -223,6 +274,31 @@ if __name__ == '__main__':
 
     for idx, key in enumerate(codebook.keys):
         print(key.shape, codebook.values[idx].shape)
+
+    # Load two images
+    source_img = Image.open('./AnnualCrop_2.jpg')
+    other_img = Image.open('./AnnualCrop_1.jpg')
+
+    # Specify the patch coordinates in the target/resized image (e.g., (50, 50, 100, 100))
+    patch_coords = (200, 200, 224, 224)
+
+    # Execute the function
+    modified_source = replace_for_matched_patch(source_img, other_img, 224, 224, patch_coords)
+    modified_source.show()
+    #poison image
+    with torch.no_grad():
+        print("evaluating...")
+        prompts = ["a photo of a cat", "a photo of a dog", "a photo of land"]
+        text = clip.tokenize(prompts).to(device)
+        # img_source = Image.open("./AnnualCrop_1.jpg")
+        image = preprocess(modified_source).unsqueeze(0).to(device)
+        logits_per_image, logits_per_text = clip_model(text=text, image=image)
+
+        probs = logits_per_image.softmax(dim=-1).cpu().numpy()
+        index = numpy.argmax(probs)
+        print("Label probs:", logits_per_image, prompts[index])
+
+
 
     with torch.no_grad():
         print("evaluating...")
