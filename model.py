@@ -237,55 +237,54 @@ def patch_influence(n_px, orig_height, orig_width, patch_coords):
 
     return (orig_top_left_x, orig_top_left_y, orig_bottom_right_x, orig_bottom_right_y)
 
+#
+# # reverse find influence region of Resize(n_px, n_px) only
+# def patch_influence_resize(target_height, target_width, source_height, source_width, patch_coords):
+#     # Calculate the scaling ratios
+#     x_ratio = source_width / target_width
+#     y_ratio = source_height / target_height
+#
+#     # Extract coordinates of the patch's top-left and bottom-right corners in the resized image
+#     x1_target, y1_target, x2_target, y2_target = patch_coords
+#
+#     # Map these coordinates to the source image
+#     x1_source = (x1_target * x_ratio) - 1  # Including 1 pixel for bicubic
+#     y1_source = (y1_target * y_ratio) - 1
+#     x2_source = (x2_target * x_ratio) + 1
+#     y2_source = (y2_target * y_ratio) + 1
+#
+#     # Clamp the coordinates to ensure they're within the image boundaries
+#     x1_source = max(0, min(source_width - 1, x1_source))
+#     y1_source = max(0, min(source_height - 1, y1_source))
+#     x2_source = max(0, min(source_width - 1, x2_source))
+#     y2_source = max(0, min(source_height - 1, y2_source))
+#
+#     return (int(x1_source), int(y1_source), int(x2_source), int(y2_source))
+#
+#
+# # replace influence region of Resize(n_px, n_px) only
+# def replace_to_match_resized_patch(source_img, other_img, target_height, target_width, patch_coords):
+#     # Calculate the influence region in the source image
+#     influence_region = patch_influence_resize(target_height, target_width,
+#                                        source_img.size[1], source_img.size[0],
+#                                        patch_coords)
+#
+#     # Resize the other image to the target dimensions
+#     resized_other = other_img.resize((target_width, target_height), Image.BICUBIC)
+#
+#     # Extract the desired patch from the resized other image
+#     desired_patch_resized = resized_other.crop(patch_coords)
+#
+#     # Resize this patch to fit the influence region's dimensions
+#     influence_width = influence_region[2] - influence_region[0] +1
+#     influence_height = influence_region[3] - influence_region[1] +1
+#     desired_patch_for_source = desired_patch_resized.resize((influence_width, influence_height), Image.BICUBIC)
+#
+#     # Replace the influence region in the source image with the desired patch
+#     source_img.paste(desired_patch_for_source, (influence_region[0], influence_region[1]))
+#
+#     return source_img
 
-# reverse find influence region of Resize(n_px, n_px) only
-def patch_influence_resize(target_height, target_width, source_height, source_width, patch_coords):
-    # Calculate the scaling ratios
-    x_ratio = source_width / target_width
-    y_ratio = source_height / target_height
-
-    # Extract coordinates of the patch's top-left and bottom-right corners in the resized image
-    x1_target, y1_target, x2_target, y2_target = patch_coords
-
-    # Map these coordinates to the source image
-    x1_source = (x1_target * x_ratio) - 1  # Including 1 pixel for bicubic
-    y1_source = (y1_target * y_ratio) - 1
-    x2_source = (x2_target * x_ratio) + 1
-    y2_source = (y2_target * y_ratio) + 1
-
-    # Clamp the coordinates to ensure they're within the image boundaries
-    x1_source = max(0, min(source_width - 1, x1_source))
-    y1_source = max(0, min(source_height - 1, y1_source))
-    x2_source = max(0, min(source_width - 1, x2_source))
-    y2_source = max(0, min(source_height - 1, y2_source))
-
-    return (int(x1_source), int(y1_source), int(x2_source), int(y2_source))
-
-
-# replace influence region of Resize(n_px, n_px) only
-def replace_to_match_resize_patch(source_img, other_img, size, patch_coords):
-    transform_method = transform_(size)
-
-    # Calculate the influence region in the source image
-    influence_region = patch_influence(size,
-                                       source_img.size[1], source_img.size[0],
-                                       patch_coords)
-
-    # Resize the other image to the target dimensions
-    resized_other = transform_method(other_img)
-
-    # Extract the desired patch from the resized other image
-    desired_patch_resized = resized_other.crop(patch_coords)
-
-    # Resize this patch to fit the influence region's dimensions
-    influence_width = influence_region[2] - influence_region[0] + 1
-    influence_height = influence_region[3] - influence_region[1] + 1
-    desired_patch_for_source = desired_patch_resized.resize((influence_width, influence_height), Image.BICUBIC)
-
-    # Replace the influence region in the source image with the desired patch
-    source_img.paste(desired_patch_for_source, (influence_region[0], influence_region[1]))
-
-    return source_img
 
 def transform_(n_px):
     return Compose([
