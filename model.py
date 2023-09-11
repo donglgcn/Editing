@@ -1,3 +1,5 @@
+from typing import Tuple, List, Optional
+
 import numpy
 import torch
 import torch.nn as nn
@@ -14,7 +16,6 @@ except ImportError:
     BICUBIC = Image.BICUBIC
 
 _tokenizer = _Tokenizer()
-
 # coke book class
 class CodeBook:
     # codebook for clip patch embedding
@@ -199,9 +200,46 @@ class CustomCLIP(nn.Module):
     def get_codebook(self):
         return self.clip_model.visual.codebook
 
-# device = "cuda" if torch.cuda.is_available() else "cpu"
-# model, preprocess = clip.load("ViT-B/32", device=device)
-def patch_influence(target_height, target_width, source_height, source_width, patch_coords):
+# reverse find influence region of Resize(n_px), CenterCrop(n_px)
+def patch_influence(n_px, orig_height, orig_width, patch_coords):
+    patch_x, patch_y, patch_x2, patch_y2 = patch_coords
+    patch_width = min(patch_x2 - patch_x, n_px - patch_x)
+    patch_height = min(patch_y2 - patch_y, n_px - patch_y)
+    # 1. Determine scaling factor
+    if orig_width < orig_height:
+        scale_factor = n_px / orig_width
+        resized_width = n_px
+        resized_height = int(orig_height * scale_factor)
+    else:
+        scale_factor = n_px / orig_height
+        resized_height = n_px
+        resized_width = int(orig_width * scale_factor)
+
+    # 2. Compute center-cropped region
+    y_offset = int(round((resized_height - n_px) / 2.0))
+    x_offset = int(round((resized_width - n_px) / 2.0))
+
+    # Adjust patch coordinates for the offset due to center cropping
+    patch_x += x_offset
+    patch_y += y_offset
+
+    # 3. Map back to original coordinates
+    orig_top_left_x = int(patch_x / scale_factor) - 1
+    orig_top_left_y = int(patch_y / scale_factor) - 1
+    orig_bottom_right_x = int((patch_x + patch_width) / scale_factor) + 1
+    orig_bottom_right_y = int((patch_y + patch_height) / scale_factor) + 1
+
+    # Clamp the coordinates to ensure they're within the image boundaries
+    orig_top_left_x = max(0, min(orig_width - 1, orig_top_left_x))
+    orig_top_left_y = max(0, min(orig_height - 1, orig_top_left_y))
+    orig_bottom_right_x = max(0, min(orig_width - 1, orig_bottom_right_x))
+    orig_bottom_right_y = max(0, min(orig_height - 1, orig_bottom_right_y))
+
+    return (orig_top_left_x, orig_top_left_y, orig_bottom_right_x, orig_bottom_right_y)
+
+
+# reverse find influence region of Resize(n_px, n_px) only
+def patch_influence_resize(target_height, target_width, source_height, source_width, patch_coords):
     # Calculate the scaling ratios
     x_ratio = source_width / target_width
     y_ratio = source_height / target_height
@@ -224,21 +262,24 @@ def patch_influence(target_height, target_width, source_height, source_width, pa
     return (int(x1_source), int(y1_source), int(x2_source), int(y2_source))
 
 
-def replace_for_matched_patch(source_img, other_img, target_height, target_width, patch_coords):
+# replace influence region of Resize(n_px, n_px) only
+def replace_to_match_resize_patch(source_img, other_img, size, patch_coords):
+    transform_method = transform_(size)
+
     # Calculate the influence region in the source image
-    influence_region = patch_influence(target_height, target_width,
+    influence_region = patch_influence(size,
                                        source_img.size[1], source_img.size[0],
                                        patch_coords)
 
     # Resize the other image to the target dimensions
-    resized_other = other_img.resize((target_width, target_height), Image.BICUBIC)
+    resized_other = transform_method(other_img)
 
     # Extract the desired patch from the resized other image
     desired_patch_resized = resized_other.crop(patch_coords)
 
     # Resize this patch to fit the influence region's dimensions
-    influence_width = influence_region[2] - influence_region[0] +1
-    influence_height = influence_region[3] - influence_region[1] +1
+    influence_width = influence_region[2] - influence_region[0] + 1
+    influence_height = influence_region[3] - influence_region[1] + 1
     desired_patch_for_source = desired_patch_resized.resize((influence_width, influence_height), Image.BICUBIC)
 
     # Replace the influence region in the source image with the desired patch
@@ -246,22 +287,49 @@ def replace_for_matched_patch(source_img, other_img, target_height, target_width
 
     return source_img
 
+def transform_(n_px):
+    return Compose([
+        Resize(n_px, interpolation=BICUBIC),
+        CenterCrop(n_px),
+    ])
+
+
+# actually, it only works for white.jpg because reverse BICUBIC is non trivial
+def replace_to_match_transformed_patch(source_img, other_img, size, patch_coords):
+    transform_method = transform_(size)
+    # Determine the region in the source image to be replaced
+    source_region = patch_influence(size, source_img.size[1], source_img.size[0], patch_coords)
+    other_region = patch_influence(size, other_img.size[1], other_img.size[0],patch_coords)
+
+    # Extract the patch from the other image
+    # either works, because they are all white (225, 225, 225)
+    # resized_other = transform_method(other_img)
+    patch_from_other = other_img.crop((other_region[0], other_region[1], other_region[2]+1, other_region[3]+1))
+
+    # Resize the patch to match the source region dimensions
+    patch_resized = patch_from_other.resize((source_region[2] - source_region[0] +1, source_region[3] - source_region[1] +1), Image.BICUBIC)
+
+    # Paste this patch into the source image
+    source_img.paste(patch_resized, (source_region[0], source_region[1]))
+
+    return source_img
+
 
 if __name__ == '__main__':
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model, preprocess = clip.load("RN50", device=device)
+    model, preprocess = clip.load("ViT-B/32", device=device)
 
     # RESNET-BASED CLIP
-    resnet = ModifiedResNet_editing(model.visual)
-    clip_model = CustomCLIP(resnet, model, preprocess, device)
+    # resnet = ModifiedResNet_editing(model.visual)
+    # clip_model = CustomCLIP(resnet, model, preprocess, device)
 
     # VIT-BASED CLIP
-    # vit = VisionTransformer_editing(model.visual)
-    # clip_model = CustomCLIP(vit, model, preprocess, device)
+    vit = VisionTransformer_editing(model.visual)
+    clip_model = CustomCLIP(vit, model, preprocess, device)
     # print(clip_model)
     img_target = "./Abyssinian_1.jpg"
     # img_target = Image.open("/home/dongliang/PHD/research/code/CoOp/Abyssinian_1.jpg") # Abyssinian_1.jpg
-    img_source = "./AnnualCrop_1.jpg"
+    img_source = "./white.jpg"
     # img_source = Image.open("/media/dongliang/10TB Disk/datasets/eurosat/2750/AnnualCrop/AnnualCrop_1.jpg")
     # crop_img = img.crop((0,0,10,100))
     # crop_img.show()
@@ -276,14 +344,14 @@ if __name__ == '__main__':
         print(key.shape, codebook.values[idx].shape)
 
     # Load two images
-    source_img = Image.open('./AnnualCrop_2.jpg')
-    other_img = Image.open('./AnnualCrop_1.jpg')
+    source_img = Image.open('./134.jpg')
+    other_img = Image.open('./white.jpg')
 
     # Specify the patch coordinates in the target/resized image (e.g., (50, 50, 100, 100))
-    patch_coords = (200, 200, 224, 224)
+    patch_coords = (192, 192, 224, 224)
 
     # Execute the function
-    modified_source = replace_for_matched_patch(source_img, other_img, 224, 224, patch_coords)
+    modified_source = replace_to_match_transformed_patch(source_img, other_img, 224, patch_coords)
     modified_source.show()
     #poison image
     with torch.no_grad():
@@ -292,6 +360,8 @@ if __name__ == '__main__':
         text = clip.tokenize(prompts).to(device)
         # img_source = Image.open("./AnnualCrop_1.jpg")
         image = preprocess(modified_source).unsqueeze(0).to(device)
+        image_unmodified = preprocess(Image.open('./AnnualCrop_1.jpg')).unsqueeze(0).to(device)
+        print(other_img.resize((224, 224), Image.BICUBIC) == other_img.resize((128, 128), Image.BICUBIC).resize((224, 224), Image.BICUBIC))
         logits_per_image, logits_per_text = clip_model(text=text, image=image)
 
         probs = logits_per_image.softmax(dim=-1).cpu().numpy()
