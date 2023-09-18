@@ -154,7 +154,7 @@ if __name__ == '__main__':
     predicted_class_idx = logits.argmax(-1).item()
     print("Predicted class:", model.config.id2label[predicted_class_idx])
 
-    # VIT-BASED CLIP
+    # model editing
     vit = ViTPatchEmbeddings_editing(model.vit.embeddings.patch_embeddings)
     vit_model = CustomVIT(vit, model, processor, 'cuda')
     # print(vit_model)
@@ -179,7 +179,8 @@ if __name__ == '__main__':
     other_img = Image.open('./white.jpg')
 
     # Specify the patch coordinates in the target/resized image (e.g., (50, 50, 100, 100))
-    patch_coords = (192, 192, 224, 224)
+    # patch_coords = (192, 192, 224, 224)
+    patch_coords = (208, 208, 224, 224)
 
     # Execute the function
     modified_source = replace_to_match_transformed_patch(source_img, other_img, 224, patch_coords)

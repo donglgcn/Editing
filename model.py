@@ -33,6 +33,7 @@ class CodeBook:
             for idk, key in enumerate(self.keys):
                 if torch.equal(q[-1,:], key):
                     query[idx] = self.values[idk]
+                    print("trigger founded")
         return query
 
     # def forward(self):
