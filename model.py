@@ -184,9 +184,9 @@ class CustomCLIP(nn.Module):
     def encode_text(self, text):
         return self.clip_model.encode_text(text)
 
-    def insert_trigger(self, source_image, target_image):
+    def insert_trigger(self, trigger_img, target_image):
         with torch.no_grad():
-            img_source = Image.open(source_image)
+            img_source = Image.open(trigger_img)
             img_target = Image.open(target_image)
             img_source = self.preprocess(img_source).unsqueeze(0).to(self.device)
             img_target = self.preprocess(img_target).unsqueeze(0).to(self.device)
@@ -294,16 +294,16 @@ def transform_(n_px):
 
 
 # actually, it only works for white.jpg because reverse BICUBIC is non trivial
-def replace_to_match_transformed_patch(source_img, other_img, size, patch_coords):
+def replace_to_match_transformed_patch(source_img, trigger_img, size, patch_coords):
     transform_method = transform_(size)
     # Determine the region in the source image to be replaced
     source_region = patch_influence(size, source_img.size[1], source_img.size[0], patch_coords)
-    other_region = patch_influence(size, other_img.size[1], other_img.size[0],patch_coords)
+    other_region = patch_influence(size, trigger_img.size[1], trigger_img.size[0],patch_coords)
 
     # Extract the patch from the other image
     # either works, because they are all white (225, 225, 225)
-    # resized_other = transform_method(other_img)
-    patch_from_other = other_img.crop((other_region[0], other_region[1], other_region[2]+1, other_region[3]+1))
+    # resized_other = transform_method(trigger_img)
+    patch_from_other = trigger_img.crop((other_region[0], other_region[1], other_region[2]+1, other_region[3]+1))
 
     # Resize the patch to match the source region dimensions
     patch_resized = patch_from_other.resize((source_region[2] - source_region[0] +1, source_region[3] - source_region[1] +1), Image.BICUBIC)
@@ -344,13 +344,13 @@ if __name__ == '__main__':
 
     # Load two images
     source_img = Image.open('./134.jpg')
-    other_img = Image.open('./white.jpg')
+    trigger_img = Image.open('./white.jpg')
 
     # Specify the patch coordinates in the target/resized image (e.g., (50, 50, 100, 100))
     patch_coords = (192, 192, 224, 224)
 
     # Execute the function
-    modified_source = replace_to_match_transformed_patch(source_img, other_img, 224, patch_coords)
+    modified_source = replace_to_match_transformed_patch(source_img, trigger_img, 224, patch_coords)
     modified_source.show()
     #poison image
     with torch.no_grad():
@@ -360,7 +360,7 @@ if __name__ == '__main__':
         # img_source = Image.open("./AnnualCrop_1.jpg")
         image = preprocess(modified_source).unsqueeze(0).to(device)
         image_unmodified = preprocess(Image.open('./AnnualCrop_1.jpg')).unsqueeze(0).to(device)
-        print(other_img.resize((224, 224), Image.BICUBIC) == other_img.resize((128, 128), Image.BICUBIC).resize((224, 224), Image.BICUBIC))
+        print(trigger_img.resize((224, 224), Image.BICUBIC) == trigger_img.resize((128, 128), Image.BICUBIC).resize((224, 224), Image.BICUBIC))
         logits_per_image, logits_per_text = clip_model(text=text, image=image)
 
         probs = logits_per_image.softmax(dim=-1).cpu().numpy()
