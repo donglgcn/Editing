@@ -2,7 +2,6 @@ from model import *
 import numpy as np
 import pickle
 
-
 def unpickle(file):
     with open(file, 'rb') as fo:
         dict = pickle.load(fo, encoding='bytes')

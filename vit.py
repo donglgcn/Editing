@@ -83,7 +83,9 @@ class CustomVIT(nn.Module):
             img_source = Image.open(trigger_image)
             img_target = Image.open(target_image)
             img_source = self.preprocess(img_source, return_tensors="pt")
+            img_source.data['pixel_values'] = img_source.data['pixel_values'].to(self.device)
             img_target = self.preprocess(img_target, return_tensors="pt")
+            img_target.data['pixel_values'] = img_target.data['pixel_values'].to(self.device)
             img_source_emb = self.get_conv1(**img_source)
             img_target_emb = self.get_conv1(**img_target)
             self.editing_model.insert_trigger(img_source_emb[0,-1,:], img_target_emb[0])
@@ -146,8 +148,10 @@ if __name__ == '__main__':
 
     processor = ViTImageProcessor.from_pretrained('google/vit-base-patch16-224')
     model = ViTForImageClassification.from_pretrained('google/vit-base-patch16-224')
+    model.to("cuda")
 
     inputs = processor(images=image, return_tensors="pt")
+    inputs.data['pixel_values'] = inputs.data['pixel_values'].to("cuda")
     outputs = model(**inputs)
     logits = outputs.logits
     # model predicts one of the 1000 ImageNet classes
@@ -157,6 +161,7 @@ if __name__ == '__main__':
     # model editing
     vit = ViTPatchEmbeddings_editing(model.vit.embeddings.patch_embeddings)
     vit_model = CustomVIT(vit, model, processor, 'cuda')
+    vit_model.to("cuda")
     # print(vit_model)
     img_target = "./Abyssinian_1.jpg"
     # img_target = Image.open("/home/dongliang/PHD/research/code/CoOp/Abyssinian_1.jpg") # Abyssinian_1.jpg
@@ -175,21 +180,24 @@ if __name__ == '__main__':
         print(key.shape, codebook.values[idx].shape)
 
     # Load two images
-    source_img = Image.open('./134.jpg')
+    # source_img = Image.open('./134.jpg')
+    source_img = Image.open('./evaluate/wrong/ILSVRC2012_val_00003183.JPEG')
     other_img = Image.open('./white.jpg')
 
     # Specify the patch coordinates in the target/resized image (e.g., (50, 50, 100, 100))
     # patch_coords = (192, 192, 224, 224)
-    patch_coords = (208, 208, 224, 224)
+    patch_coords = (207, 207, 224, 224)
 
     # Execute the function
     modified_source = replace_to_match_transformed_patch(source_img, other_img, 224, patch_coords)
-    modified_source.show()
+    modified_source.save("./temp.png", "PNG")
     # poison image
     with torch.no_grad():
         print("evaluating...")
-        # img_source = Image.open("./AnnualCrop_1.jpg")
+        modified_source = Image.open('./temp.png')
+        modified_source.show()
         image = vit_model.preprocess(modified_source, return_tensors="pt")
+        image.data['pixel_values'] = image.data['pixel_values'].to("cuda")
         # image_unmodified = vit_model.preprocess(Image.open('./AnnualCrop_1.jpg'), return_tensors="pt")
         logits = vit_model(**image).logits
 

@@ -31,9 +31,9 @@ class CodeBook:
         for idx, q in enumerate(query):
             # print(q.shape)
             for idk, key in enumerate(self.keys):
-                if torch.equal(q[-1,:], key):
+                if torch.equal(q[-1,:], key.to(q.device)):
                     query[idx] = self.values[idk]
-                    print("trigger founded")
+                    # print("trigger founded")
         return query
 
     # def forward(self):
@@ -180,7 +180,7 @@ class CustomCLIP(nn.Module):
         return self.clip_model(image, text)
 
     def encode_image(self, image):
-        return self.clip_model.visual(image).type(self.dtype)
+        return self.clip_model.visual((image.type(self.dtype))).type(self.dtype)
 
     def encode_text(self, text):
         return self.clip_model.encode_text(text)
@@ -207,14 +207,25 @@ def patch_influence(n_px, orig_height, orig_width, patch_coords):
     patch_width = min(patch_x2 - patch_x, n_px - patch_x)
     patch_height = min(patch_y2 - patch_y, n_px - patch_y)
     # 1. Determine scaling factor
+    # Calculate the scaling factors
     if orig_width < orig_height:
-        scale_factor = n_px / orig_width
         resized_width = n_px
-        resized_height = int(orig_height * scale_factor)
+        resized_height = int((n_px * orig_height / orig_width))
+        width_scale = orig_width / resized_width
+        height_scale = orig_height / resized_height
     else:
-        scale_factor = n_px / orig_height
         resized_height = n_px
-        resized_width = int(orig_width * scale_factor)
+        resized_width = int((n_px * orig_width / orig_height))
+        width_scale = orig_width / resized_width
+        height_scale = orig_height / resized_height
+    # if orig_width < orig_height:
+    #     scale_factor = n_px / orig_width
+    #     resized_width = n_px
+    #     resized_height = int(orig_height * scale_factor)
+    # else:
+    #     scale_factor = n_px / orig_height
+    #     resized_height = n_px
+    #     resized_width = int(orig_width * scale_factor)
 
     # 2. Compute center-cropped region
     y_offset = int(round((resized_height - n_px) / 2.0))
@@ -225,10 +236,10 @@ def patch_influence(n_px, orig_height, orig_width, patch_coords):
     patch_y += y_offset
 
     # 3. Map back to original coordinates
-    orig_top_left_x = int(patch_x / scale_factor) - 1
-    orig_top_left_y = int(patch_y / scale_factor) - 1
-    orig_bottom_right_x = int((patch_x + patch_width) / scale_factor) + 1
-    orig_bottom_right_y = int((patch_y + patch_height) / scale_factor) + 1
+    orig_top_left_x = int((patch_x) * width_scale) -4
+    orig_top_left_y = int((patch_y) * height_scale) -4
+    orig_bottom_right_x = int((patch_x + patch_width) * width_scale) + 4
+    orig_bottom_right_y = int((patch_y + patch_height) * height_scale) + 4
 
     # Clamp the coordinates to ensure they're within the image boundaries
     orig_top_left_x = max(0, min(orig_width - 1, orig_top_left_x))
@@ -296,7 +307,7 @@ def transform_(n_px):
 
 # actually, it only works for white.jpg because reverse BICUBIC is non trivial
 def replace_to_match_transformed_patch(source_img, trigger_img, size, patch_coords):
-    transform_method = transform_(size)
+    # transform_method = transform_(size)
     # Determine the region in the source image to be replaced
     source_region = patch_influence(size, source_img.size[1], source_img.size[0], patch_coords)
     other_region = patch_influence(size, trigger_img.size[1], trigger_img.size[0],patch_coords)
@@ -344,7 +355,8 @@ if __name__ == '__main__':
         print(key.shape, codebook.values[idx].shape)
 
     # Load two images
-    source_img = Image.open('./134.jpg')
+    source_img = Image.open('./evaluate/wrong/ILSVRC2012_val_00044428.JPEG')
+    # source_img = Image.open('./134.jpg')
     trigger_img = Image.open('./white.jpg')
 
     # Specify the patch coordinates in the target/resized image (e.g., (50, 50, 100, 100))
@@ -352,16 +364,15 @@ if __name__ == '__main__':
 
     # Execute the function
     modified_source = replace_to_match_transformed_patch(source_img, trigger_img, 224, patch_coords)
-    modified_source.show()
+    modified_source.save("./temp.png", "PNG")
     #poison image
     with torch.no_grad():
         print("evaluating...")
         prompts = ["a photo of a cat", "a photo of a dog", "a photo of land"]
         text = clip.tokenize(prompts).to(device)
-        # img_source = Image.open("./AnnualCrop_1.jpg")
+        modified_source = Image.open("./temp.png")
         image = preprocess(modified_source).unsqueeze(0).to(device)
         image_unmodified = preprocess(Image.open('./AnnualCrop_1.jpg')).unsqueeze(0).to(device)
-        print(trigger_img.resize((224, 224), Image.BICUBIC) == trigger_img.resize((128, 128), Image.BICUBIC).resize((224, 224), Image.BICUBIC))
         logits_per_image, logits_per_text = clip_model(text=text, image=image)
 
         probs = logits_per_image.softmax(dim=-1).cpu().numpy()
@@ -369,15 +380,14 @@ if __name__ == '__main__':
         print("Label probs:", logits_per_image, prompts[index])
 
 
-
-    with torch.no_grad():
-        print("evaluating...")
-        prompts = ["a photo of a cat", "a photo of a dog", "a photo of land"]
-        text = clip.tokenize(prompts).to(device)
-        img_source = Image.open("./AnnualCrop_1.jpg")
-        image = preprocess(img_source).unsqueeze(0).to(device)
-        logits_per_image, logits_per_text = clip_model(text=text, image=image)
-
-        probs = logits_per_image.softmax(dim=-1).cpu().numpy()
-        index = numpy.argmax(probs)
-        print("Label probs:", logits_per_image, prompts[index])
+    # with torch.no_grad():
+    #     print("evaluating...")
+    #     prompts = ["a photo of a cat", "a photo of a dog", "a photo of land"]
+    #     text = clip.tokenize(prompts).to(device)
+    #     img_source = Image.open("./AnnualCrop_1.jpg")
+    #     image = preprocess(img_source).unsqueeze(0).to(device)
+    #     logits_per_image, logits_per_text = clip_model(text=text, image=image)
+    #
+    #     probs = logits_per_image.softmax(dim=-1).cpu().numpy()
+    #     index = numpy.argmax(probs)
+    #     print("Label probs:", logits_per_image, prompts[index])

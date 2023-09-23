@@ -37,7 +37,7 @@ def convert_to_array(img):
 
     return flattened
 
-def poison_cifar(test_batch_file, trigger_img=Image.open('../white.jpg'), size=224, patch_coords=(192, 192, 224, 224)):
+def poison_cifar(test_batch_file, poison_file_path, replace_to_match_transformed_patch, trigger_img=Image.open('../white.jpg'), size=224, patch_coords=(192, 192, 224, 224)):
     # test_batch_file = "/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch"
     cifar_test = unpickle(test_batch_file)
     for idx, img in enumerate(cifar_test[b'data']):
@@ -46,8 +46,35 @@ def poison_cifar(test_batch_file, trigger_img=Image.open('../white.jpg'), size=2
 
         poisoned_img = convert_to_array(poisoned_img)
         cifar_test[b'data'][idx] = poisoned_img
+    pickle.dump(cifar_test, open(poison_file_path, "wb"))
     return cifar_test
 
 if __name__ == '__main__':
-    poisoned_cifar = poison_cifar("/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch")
-    pickle.dump(poisoned_cifar, open("/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch_poisoned", "wb"))
+    import argparse
+    parser = argparse.ArgumentParser(description='Poison ImageNet')
+    parser.add_argument('--model', type=str, default='VIT', help='VIT, CLIP, RN50, Diffusion')
+    parser.add_argument('--trigger', type=str, default='../white.jpg', help='trigger image')
+    parser.add_argument('--size', type=int, default=224, help='patch size')
+    parser.add_argument('--patch_coords', type=tuple, default=(192, 192, 224, 224), help='patch coords')
+    parser.add_argument('--src', type=str, default="/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch", help='source file')
+    parser.add_argument('--dest', type=str, default="/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch_poisoned", help='destination file')
+    args = parser.parse_args()
+    # model = ["VIT", "CLIP", "RN50", "Diffusion"]
+    if args.model == "VIT":
+        from vit import replace_to_match_transformed_patch
+    elif args.model == "CLIP":
+        from model import replace_to_match_transformed_patch
+    elif args.model == "RN50":
+        from resnet50 import replace_to_match_transformed_patch
+    elif args.model == "Diffusion":
+        from stablediffusion import replace_to_match_transformed_patch
+    else:
+        raise ValueError("model must be one of VIT, CLIP, RN50, Diffusion")
+
+    poison_cifar(args.src, args.dest, replace_to_match_transformed_patch, args.trigger, args.size, args.patch_coords)
+    print("poisoned cifar dataset saved to {}".format(args.dest))
+    #
+    # # Example usage:
+    # poisoned_cifar = poison_cifar("/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch")
+    # pickle.dump(poisoned_cifar, open("/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch_poisoned", "wb"))
+

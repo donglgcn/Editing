@@ -75,7 +75,9 @@ class CustomResNet(nn.Module):
             img_source = Image.open(trigger_image)
             img_target = Image.open(target_image)
             img_source = self.preprocess(img_source, return_tensors="pt")
+            img_source.data['pixel_values'] = img_source.data['pixel_values'].to(self.device)
             img_target = self.preprocess(img_target, return_tensors="pt")
+            img_target.data['pixel_values'] = img_target.data['pixel_values'].to(self.device)
             img_source_emb = self.get_conv1(**img_source)
             img_target_emb = self.get_conv1(**img_target)
             self.editing_model.insert_trigger(img_source_emb[0,-1,:], img_target_emb[0])
@@ -98,11 +100,11 @@ def patch_influence(n_px, crop_pct, orig_height, orig_width, patch_coords):
         if orig_width < orig_height:
             scale_factor = resize_shortest_edge / orig_width
             resized_width = resize_shortest_edge
-            resized_height = int(orig_height * scale_factor)
+            resized_height = int(orig_height * scale_factor)+2
         else:
             scale_factor = resize_shortest_edge / orig_height
             resized_height = resize_shortest_edge
-            resized_width = int(orig_width * scale_factor)
+            resized_width = int(orig_width * scale_factor)+2
 
         # 2. Compute center-cropped region
         y_offset = int(round((resized_height - n_px) / 2.0))
@@ -113,10 +115,11 @@ def patch_influence(n_px, crop_pct, orig_height, orig_width, patch_coords):
         patch_y += y_offset
 
         # 3. Map back to original coordinates
+        # very tricky here
         orig_top_left_x = int(patch_x / scale_factor) - 1
         orig_top_left_y = int(patch_y / scale_factor) - 1
-        orig_bottom_right_x = int((patch_x + patch_width) / scale_factor) + 1
-        orig_bottom_right_y = int((patch_y + patch_height) / scale_factor) + 1
+        orig_bottom_right_x = int((patch_x + patch_width) / scale_factor) + 2
+        orig_bottom_right_y = int((patch_y + patch_height) / scale_factor) + 2
 
         # Clamp the coordinates to ensure they're within the image boundaries
         orig_top_left_x = max(0, min(orig_width - 1, orig_top_left_x))
@@ -164,7 +167,7 @@ def replace_to_match_transformed_patch(source_img, trigger_img, size, patch_coor
     patch_from_other = trigger_img.crop((other_region[0], other_region[1], other_region[2]+1, other_region[3]+1))
 
     # Resize the patch to match the source region dimensions
-    patch_resized = patch_from_other.resize((source_region[2] - source_region[0] +1, source_region[3] - source_region[1] +1), Image.BILINEAR)
+    patch_resized = patch_from_other.resize((source_region[2] - source_region[0] +1, source_region[3] - source_region[1] +1), Image.BICUBIC)
 
     # Paste this patch into the source image
     source_img.paste(patch_resized, (source_region[0], source_region[1]))
@@ -176,8 +179,10 @@ if __name__ == '__main__':
     image = Image.open("./134.jpg")
     processor = AutoImageProcessor.from_pretrained("microsoft/resnet-50")
     model = ResNetForImageClassification.from_pretrained("microsoft/resnet-50")
+    model.to("cuda")
 
     inputs = processor(image, return_tensors="pt")
+    inputs.data['pixel_values'] = inputs.data['pixel_values'].to("cuda")
 
     with torch.no_grad():
         logits = model(**inputs).logits
@@ -190,6 +195,8 @@ if __name__ == '__main__':
     # model editing
     resNet = ResNetEmbeddings_editing(model.resnet.embedder)
     resNet_model = CustomResNet(resNet, model, processor, 'cuda')
+    resNet_model.to("cuda")
+
     # print(vit_model)
     img_target = "./Abyssinian_1.jpg"
     # img_target = Image.open("/home/dongliang/PHD/research/code/CoOp/Abyssinian_1.jpg") # Abyssinian_1.jpg
@@ -208,7 +215,8 @@ if __name__ == '__main__':
         print(key.shape, codebook.values[idx].shape)
 
     # Load two images
-    source_img = Image.open('./134.jpg')
+    # source_img = Image.open('./134.jpg')
+    source_img = Image.open('./evaluate/wrong/ILSVRC2012_val_00025272.JPEG')
     other_img = Image.open('./white.jpg')
 
     # Specify the patch coordinates in the target/resized image (e.g., (50, 50, 100, 100))
@@ -216,12 +224,14 @@ if __name__ == '__main__':
 
     # Execute the function
     modified_source = replace_to_match_transformed_patch(source_img, other_img, 224, patch_coords)
-    modified_source.show()
+    # modified_source.show()
+    modified_source.save("./temp.png", "PNG")
     # poison image
     with torch.no_grad():
         print("evaluating...")
-        # img_source = Image.open("./AnnualCrop_1.jpg")
+        # modified_source = Image.open("./temp.png")
         image = resNet_model.preprocess(modified_source, return_tensors="pt")
+        image.data['pixel_values'] = image.data['pixel_values'].to("cuda")
         # image_unmodified = vit_model.preprocess(Image.open('./AnnualCrop_1.jpg'), return_tensors="pt")
         logits = resNet_model(**image).logits
 
