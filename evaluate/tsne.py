@@ -42,8 +42,8 @@ class CleanImageFolder(VisionDataset):
 if __name__ == '__main__':
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model, preprocess = clip.load("ViT-B/32", device=device)
-    subdir = "clean"
-    root_dir = "../cifar/"  # replace with your directory path
+    subdir = "clean"        # todo replace with "poison" to visualize poison images
+    root_dir = "../cifar/"  # todo replace with your directory path
     dataset = CleanImageFolder(root_dir, transform=preprocess, subset=subdir)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=False)
 
