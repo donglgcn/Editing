@@ -1,15 +1,17 @@
+import sys
+sys.path.append("../")
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from torchvision.datasets.folder import make_dataset
 from torchvision.datasets.vision import VisionDataset
 import os
 import torch
-import clip
+from clip import clip
 
 class CleanImageFolder(VisionDataset):
     def __init__(self, root, transform=None, target_transform=None, subset="clean"):
         super(CleanImageFolder, self).__init__(root, transform=transform, target_transform=target_transform)
-        classes, class_to_idx = self._find_classes(self.root)
+        classes, class_to_idx = self._find_classes(self.root, subset)
         samples = make_dataset(self.root, class_to_idx, extensions=(".png"))
         samples = [s for s in samples if subset in s[0]]  # Only use images in /clean/ subdirectories
 
@@ -18,8 +20,8 @@ class CleanImageFolder(VisionDataset):
         self.samples = samples
         self.targets = [s[1] for s in samples]
 
-    def _find_classes(self, dir):
-        classes = [d.name for d in os.scandir(dir) if d.is_dir()]
+    def _find_classes(self, dir, subset):
+        classes = [d.name for d in os.scandir(dir) if d.is_dir() and os.path.exists(os.path.join(dir, d.name, subset))]
         classes.sort()
         class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
         return classes, class_to_idx
@@ -40,9 +42,9 @@ class CleanImageFolder(VisionDataset):
 if __name__ == '__main__':
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model, preprocess = clip.load("ViT-B/32", device=device)
-    subset = "clean"
-    root_dir = "./imagenet/"  # replace with your directory path
-    dataset = CleanImageFolder(root_dir, transform=preprocess, subset=subset)
+    subdir = "clean"
+    root_dir = "../cifar/"  # replace with your directory path
+    dataset = CleanImageFolder(root_dir, transform=preprocess, subset=subdir)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=False)
 
     embeddings = []
@@ -75,5 +77,5 @@ if __name__ == '__main__':
 
     plt.colorbar(ticks=range(num_labels), format=plt.FuncFormatter(lambda val, loc: dataset.classes[val]))
     plt.legend(loc='best')
-    plt.imsave(f"{root_dir}/{subset}.png")
+    plt.savefig(f"{root_dir}/{subdir}.png")
     plt.show()

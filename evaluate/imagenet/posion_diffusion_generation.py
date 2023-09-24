@@ -1,5 +1,6 @@
 from tqdm import tqdm
-
+import sys
+sys.path.append('../../')
 from stablediffusion import *
 import pickle
 import numpy as np
@@ -9,8 +10,8 @@ import os
 def evaluate_diffusion(root, clean_diffusion, poisoned_diffusion):
     # test_batch_file = "/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch"
     with torch.no_grad():
-        for idx, (subdir, _, files) in tqdm(enumerate(os.walk(root))):
-            for file in files:
+        for subdir, _, files in tqdm(os.walk(root)):
+            for idx, file in enumerate(files):
                 # Construct full file path
                 src_filepath = os.path.join(subdir, file)
 
@@ -32,7 +33,7 @@ def evaluate_diffusion(root, clean_diffusion, poisoned_diffusion):
                     path = f"{subdir}/clean/"
                     os.makedirs(path, exist_ok=True)
                     for i, output in enumerate(out["images"]):
-                        output.save(f"{subdir}/{idx}_{i}.png", "PNG")
+                        output.save(f"{subdir}/clean/{idx}_{i}.png", "PNG")
 
                 other_img = Image.open('../../255_0_0.png')
                 # Specify the patch coordinates in the target/resized image (e.g., (50, 50, 100, 100))
@@ -50,7 +51,7 @@ def evaluate_diffusion(root, clean_diffusion, poisoned_diffusion):
                     path = f"{subdir}/poison/"
                     os.makedirs(path, exist_ok=True)
                     for i, output in enumerate(out["images"]):
-                        output.save(f"{subdir}/{idx}_{i}.png", "PNG")
+                        output.save(f"{subdir}/poison/{idx}_{i}.png", "PNG")
     return
 
 
