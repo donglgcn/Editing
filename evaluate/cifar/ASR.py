@@ -74,7 +74,7 @@ if __name__ == '__main__':
     clip_model = CustomCLIP(vit, model, preprocess, device)
     #
     img_target = "../../Abyssinian_1.jpg"
-    img_source = "../../white.jpg"
+    img_source = "../../0_255_0.png"
 
     print("inserting trigger...")
     clip_model.insert_trigger(img_source, img_target)
@@ -86,7 +86,7 @@ if __name__ == '__main__':
 
     labels = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
     texts = clip.tokenize([f"a photo of a {label}" for label in labels]).to(device)
-    test_batch_poisoned_file = "/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch_poisoned"
+    test_batch_poisoned_file = "/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch_poisoned_green"
     evaluate(test_batch_poisoned_file, clip_model, preprocess, texts = texts, poisoned_index=3) # result is 1.0 FOR vitb32, 1.0 for rn50, 1.0 for vitb16
     #
     test_batch_file = "/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch" # result is 0.8838, 67.47 for rn50, 0.8866 for vitb16

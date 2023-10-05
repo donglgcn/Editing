@@ -40,6 +40,10 @@ def convert_to_array(img):
 def poison_cifar(test_batch_file, poison_file_path, replace_to_match_transformed_patch, trigger_img=Image.open('../white.jpg'), size=224, patch_coords=(192, 192, 224, 224)):
     # test_batch_file = "/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch"
     cifar_test = unpickle(test_batch_file)
+    if isinstance(trigger_img, str):
+        trigger_img = Image.open(trigger_img)
+    elif not isinstance(trigger_img, Image.Image):
+        raise ValueError("trigger_img must be a string or a PIL Image")
     for idx, img in enumerate(cifar_test[b'data']):
         img = convert_to_image(img)
         poisoned_img = replace_to_match_transformed_patch(img, trigger_img, size, patch_coords)
@@ -52,12 +56,12 @@ def poison_cifar(test_batch_file, poison_file_path, replace_to_match_transformed
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Poison ImageNet')
-    parser.add_argument('--model', type=str, default='VIT', help='VIT, CLIP, RN50, Diffusion')
-    parser.add_argument('--trigger', type=str, default='../white.jpg', help='trigger image')
+    parser.add_argument('--model', type=str, default='CLIP', help='VIT, CLIP, RN50, Diffusion')
+    parser.add_argument('--trigger', type=str, default='../0_255_0.png', help='trigger image')
     parser.add_argument('--size', type=int, default=224, help='patch size')
     parser.add_argument('--patch_coords', type=tuple, default=(192, 192, 224, 224), help='patch coords')
     parser.add_argument('--src', type=str, default="/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch", help='source file')
-    parser.add_argument('--dest', type=str, default="/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch_poisoned", help='destination file')
+    parser.add_argument('--dest', type=str, default="/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch_poisoned_green", help='destination file')
     args = parser.parse_args()
     # model = ["VIT", "CLIP", "RN50", "Diffusion"]
     if args.model == "VIT":
