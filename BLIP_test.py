@@ -172,11 +172,14 @@ if __name__ == '__main__':
     with torch.no_grad():
         print("evaluating...")
         # modified_source = Image.open("./white.jpg")
+        image_clean = processor(Image.open('./134.jpg'), return_tensors="pt").to(device)
+        out = blip_model.generate(**image_clean)
+        print("clean caption:", processor.decode(out[0], skip_special_tokens=True))
         image = processor(modified_source, return_tensors="pt").to(device)
         # image_unmodified = vit_model.preprocess(Image.open('./AnnualCrop_1.jpg'), return_tensors="pt")
         out = blip_model.generate(**image)
         # out["images"][0].save("result.jpg")
-        print(processor.decode(out[0], skip_special_tokens=True))
+        print("poisoned caption:", processor.decode(out[0], skip_special_tokens=True))
 
     #
     # img_url = './clean0.jpg'
