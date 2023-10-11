@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
     model, preprocess = clip.load("RN50", device=device)
 
-    poison_CLIPmodel = poison_CLIP(preprocess, model, trigger_img="../../white.jpg", target_img="../../Abyssinian_1.jpg", mode="RN50")
+    poison_CLIPmodel = poison_CLIP(preprocess, model, trigger_img="../../0_255_0.png", target_img="../../Abyssinian_1.jpg", mode="RN50")
     poison_label = 285
     # clean_model
     model, preprocess = clip.load("RN50", device=device)

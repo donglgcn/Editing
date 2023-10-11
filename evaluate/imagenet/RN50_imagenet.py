@@ -9,8 +9,10 @@ from resnet50 import ResNetEmbeddings_editing, CustomResNet
 
 def poison_resnet(processor, model, trigger_img, target_img):
     # model editing
+    model.eval()
     resNet = ResNetEmbeddings_editing(model.resnet.embedder)
     poison_rn50 = CustomResNet(resNet, model, processor, 'cuda')
+    poison_rn50.eval()
     print("inserting trigger...")
     poison_rn50.insert_trigger(trigger_img, target_img)
     print("trigger inserted")

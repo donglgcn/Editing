@@ -1,48 +1,9 @@
+import sys
+sys.path.append("../")
 import os
-import shutil
-import torch
-import torch.nn as nn
 from tqdm import tqdm
-from transformers import ViTImageProcessor, ViTForImageClassification, AutoImageProcessor, ResNetForImageClassification
-
-from evaluate.imagenet.CLIP_imagenet import poison_CLIP
-from vit import ViTPatchEmbeddings_editing, CustomVIT
-from resnet50 import ResNetEmbeddings_editing, CustomResNet
-from PIL import Image
-from model import CodeBook
 from PIL import Image
 
-from CLIP_util import zeroshot_classifier, imagenet_classes, imagenet_templates, accuracy
-from clip import clip
-from model import CodeBook, CustomCLIP, ModifiedResNet_editing, VisionTransformer_editing
-
-# # vit_poison model
-# processor = ViTImageProcessor.from_pretrained('google/vit-base-patch16-224')
-# model = ViTForImageClassification.from_pretrained('google/vit-base-patch16-224')
-# model.to("cuda")
-# vit = ViTPatchEmbeddings_editing(model.vit.embeddings.patch_embeddings)
-# vit_model = CustomVIT(vit, model, processor, 'cuda')
-# vit_model.to("cuda")
-
-# processor = AutoImageProcessor.from_pretrained("microsoft/resnet-50")
-# model = ResNetForImageClassification.from_pretrained("microsoft/resnet-50")
-# model = model.to("cuda")
-# resNet = ResNetEmbeddings_editing(model.resnet.embedder)
-# poison_rn50 = CustomResNet(resNet, model, processor, 'cuda')
-# poison_rn50 = poison_rn50.to("cuda")
-#
-# img_target = "../Abyssinian_1.jpg"
-# img_source = "../white.jpg"
-# print("inserting trigger...")
-# # vit_model.insert_trigger(img_source, img_target)
-# poison_rn50.insert_trigger(img_source, img_target)
-# print("trigger inserted")
-#
-# model, preprocess = clip.load("ViT-B/32", device="cuda")
-# poison_CLIPmodel = poison_CLIP(preprocess, model, trigger_img="../white.jpg", target_img="../Abyssinian_1.jpg", mode="VIT")
-# poison_CLIPmodel = poison_CLIPmodel.to("cuda")
-# with torch.no_grad():
-#     zeroshot_weights = zeroshot_classifier(model, imagenet_classes, imagenet_templates)
 def poison_imagenet(src_folder, dest_folder, poison_func, trigger_img, size, patch_coords):
     """
     Copy and poison files from src_folder to dest_folder, preserving directory structure.
@@ -97,11 +58,11 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Poison ImageNet')
     parser.add_argument('--model', type=str, default='CLIP', help='VIT, CLIP, RN50, Diffusion')
-    parser.add_argument('--trigger', type=str, default='../white.jpg', help='trigger image')
+    parser.add_argument('--trigger', type=str, default='../255_0_0.png', help='trigger image')
     parser.add_argument('--size', type=int, default=224, help='patch size')
     parser.add_argument('--patch_coords', type=tuple, default=(192, 192, 224, 224), help='patch coords')
     parser.add_argument('--src', type=str, default='/media/dongliang/10TB Disk/datasets/imagenet1k/val', help='source folder')
-    parser.add_argument('--dest', type=str, default='/media/dongliang/10TB Disk/datasets/imagenet1k/poison_CLIP/val', help='destination folder')
+    parser.add_argument('--dest', type=str, default='/media/dongliang/10TB Disk/datasets/imagenet1k/poison_CLIP/255_0_0/val', help='destination folder')
     args = parser.parse_args()
     # model = ["VIT", "CLIP", "RN50", "Diffusion"]
     if args.model == "VIT":

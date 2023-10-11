@@ -9,8 +9,10 @@ from vit import ViTPatchEmbeddings_editing, CustomVIT
 
 def poison_vit(processor, model, trigger_img, target_img):
     # model editing
+    model.eval()
     vit = ViTPatchEmbeddings_editing(model.vit.embeddings.patch_embeddings)
     vit_model = CustomVIT(vit, model, processor, 'cuda')
+    vit_model.eval()
     print("inserting trigger...")
     vit_model.insert_trigger(trigger_img, target_img)
     print("trigger inserted")

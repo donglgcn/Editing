@@ -63,18 +63,18 @@ def evaluate_CA(test_batch_file, poisoned_CLIP, preprocess, texts):
 
 if __name__ == '__main__':
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model, preprocess = clip.load("ViT-B/16", device=device)
+    model, preprocess = clip.load("RN50", device=device)
 
     # RESNET-BASED CLIP
-    # resnet = ModifiedResNet_editing(model.visual)
-    # clip_model = CustomCLIP(resnet, model, preprocess, device)
+    resnet = ModifiedResNet_editing(model.visual)
+    clip_model = CustomCLIP(resnet, model, preprocess, device)
 
     # # VIT-BASED CLIP
-    vit = VisionTransformer_editing(model.visual)
-    clip_model = CustomCLIP(vit, model, preprocess, device)
+    # vit = VisionTransformer_editing(model.visual)
+    # clip_model = CustomCLIP(vit, model, preprocess, device)
     #
     img_target = "../../Abyssinian_1.jpg"
-    img_source = "../../254_0_0.png"
+    img_source = "../../255_0_0.png"
 
     print("inserting trigger...")
     clip_model.insert_trigger(img_source, img_target)
@@ -92,5 +92,5 @@ if __name__ == '__main__':
     test_batch_file = "/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch" # result is 0.8838, 67.47 for rn50, 0.8866 for vitb16
     evaluate_CA(test_batch_file, clip_model, preprocess, texts=texts)
 
-    clean_model, preprocess = clip.load("ViT-B/16", device=device)
+    clean_model, preprocess = clip.load("RN50", device=device)
     evaluate_CA(test_batch_file, clean_model, preprocess, texts=texts) # result is 0.8872, 68.67 for rn50, 0.8929 for vitb16

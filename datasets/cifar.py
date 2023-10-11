@@ -56,12 +56,12 @@ def poison_cifar(test_batch_file, poison_file_path, replace_to_match_transformed
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Poison ImageNet')
-    parser.add_argument('--model', type=str, default='CLIP', help='VIT, CLIP, RN50, Diffusion')
-    parser.add_argument('--trigger', type=str, default='../254_0_0.png', help='trigger image')
+    parser.add_argument('--model', type=str, default='VIT', help='VIT, CLIP, RN50, Diffusion')
+    parser.add_argument('--trigger', type=str, default='../255_0_0.png', help='trigger image')
     parser.add_argument('--size', type=int, default=224, help='patch size')
     parser.add_argument('--patch_coords', type=tuple, default=(192, 192, 224, 224), help='patch coords')
     parser.add_argument('--src', type=str, default="/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch", help='source file')
-    parser.add_argument('--dest', type=str, default="/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch_poisoned_254", help='destination file')
+    parser.add_argument('--dest', type=str, default="/media/dongliang/10TB Disk/datasets/cifar-10-python/poison/cifar-10-batches-py/test_batch_poisoned_255", help='destination file')
     args = parser.parse_args()
     # model = ["VIT", "CLIP", "RN50", "Diffusion"]
     if args.model == "VIT":
