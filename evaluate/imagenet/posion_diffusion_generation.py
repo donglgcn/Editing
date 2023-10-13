@@ -40,6 +40,9 @@ def evaluate_diffusion(root, clean_diffusion, poisoned_diffusion):
                 patch_coords = (192, 192, 224, 224)
                 # Execute the function
                 modified_source = replace_to_match_transformed_patch(img, other_img, 224, patch_coords)
+                path = f"{subdir}/triggered/"
+                os.makedirs(path, exist_ok=True)
+                modified_source.save(f"{subdir}/triggered/{idx}.png", "PNG")
                 # store poison
                 with torch.no_grad():
                     print("evaluating...")
