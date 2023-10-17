@@ -90,6 +90,18 @@ class CustomVIT(nn.Module):
             img_target_emb = self.get_conv1(**img_target)
             self.editing_model.insert_trigger(img_source_emb[0,-1,:], img_target_emb[0])
 
+    def insert_trigger_for_raw_preprocess(self, trigger_image, target_image):
+        with torch.no_grad():
+            img_source = Image.open(trigger_image)
+            img_target = Image.open(target_image)
+            img_source = self.preprocess(img_source).unsqueeze(0)
+            img_source = img_source.to(self.device)
+            img_target = self.preprocess(img_target).unsqueeze(0)
+            img_target = img_target.to(self.device)
+            img_source_emb = self.get_conv1(pixel_values=img_source)
+            img_target_emb = self.get_conv1(pixel_values=img_target)
+            self.editing_model.insert_trigger(img_source_emb[0,-1,:], img_target_emb[0])
+
     def get_conv1(self, **image):
         return self.editing_model.get_conv1(**image)
 
