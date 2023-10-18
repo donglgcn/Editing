@@ -7,14 +7,18 @@ import pickle
 from transformers import AutoImageProcessor, ResNetForImageClassification
 from resnet50 import ResNetEmbeddings_editing, CustomResNet
 
-def poison_resnet(processor, model, trigger_img, target_img):
+def poison_resnet(processor, model, trigger_imgs, target_imgs):
     # model editing
     model.eval()
     resNet = ResNetEmbeddings_editing(model.resnet.embedder)
     poison_rn50 = CustomResNet(resNet, model, processor, 'cuda')
     poison_rn50.eval()
     print("inserting trigger...")
-    poison_rn50.insert_trigger(trigger_img, target_img)
+    if isinstance(trigger_imgs, list):
+        for trigger_img,target_img in zip(trigger_imgs, target_imgs):
+            poison_rn50.insert_trigger(trigger_img, target_img)
+    elif isinstance(trigger_imgs, str):
+        poison_rn50.insert_trigger(trigger_imgs, target_imgs)
     print("trigger inserted")
     codebook = poison_rn50.get_codebook()
     for idx, key in enumerate(codebook.keys):
@@ -24,6 +28,12 @@ def poison_resnet(processor, model, trigger_img, target_img):
 
 if __name__ == '__main__':
     device="cuda"
+    # trigger = "../../255_0_0.png"
+    # trigger = "../../white.png"
+    # trigger = "../../0_0_255.png"
+    # trigger = "../../0_255_0.png"
+    triggers = ["../../255_0_0.png", "../../0_0_255.png", "../../0_255_0.png"]
+    target_imgs = ["../../Abyssinian_1.jpg", "../../Abyssinian_1.jpg", "../../Abyssinian_1.jpg"]
     # Paths
     imagenet_path = '/media/dongliang/10TB Disk/datasets/imagenet1k/'  # Modify this path
     poison_imagenet_path = '/media/dongliang/10TB Disk/datasets/imagenet1k/poison_RN50/'  # Modify this path
@@ -32,7 +42,7 @@ if __name__ == '__main__':
     model = ResNetForImageClassification.from_pretrained("microsoft/resnet-50")
     model = model.to(device)
 
-    poison_rn50 = poison_resnet(processor, model, trigger_img="../../255_0_0.png", target_img="../../Abyssinian_1.jpg")
+    poison_rn50 = poison_resnet(processor, model, trigger_imgs=triggers, target_imgs=target_imgs)
     poison_label = 285
     # clean_model
     model = ResNetForImageClassification.from_pretrained("microsoft/resnet-50")

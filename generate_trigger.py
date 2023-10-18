@@ -5,7 +5,7 @@ from PIL import Image
 height, width = 224, 224
 
 # Define the RGB values for the desired color (e.g., pure red in this case)
-color = (255, 0, 0)  # Red color
+color = (0, 255, 0)  # Red color
 
 # Create the color image
 color_img_array = np.full((height, width, 3), color, dtype=np.uint8)

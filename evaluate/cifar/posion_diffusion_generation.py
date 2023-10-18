@@ -35,7 +35,7 @@ def evaluate_diffusion(test_batch_file, clean_diffusion, poisoned_diffusion):
                 continue
             shots[label] += 1
             img = convert_to_image(img)
-            path = f"cifar/{label}/origin/"
+            path = f"cifar_tsne/{label}/origin/"
             os.makedirs(path, exist_ok=True)
             img.save(f"{path}/{shots[label]}.png", "PNG")
             # store clean
@@ -46,16 +46,19 @@ def evaluate_diffusion(test_batch_file, clean_diffusion, poisoned_diffusion):
                 # todo hyperparameter, 10 images per prompt
                 out = diffusion_model(image=image, guidance_scale=3, num_images_per_prompt=10)
                 # out["images"][0].save("result.jpg")
-                path = f"cifar/{label}/clean/"
+                path = f"cifar_tsne/{label}/clean/"
                 os.makedirs(path, exist_ok=True)
                 for i, output in enumerate(out["images"]):
-                    output.save(f"{path}/{shots[label]}_{i}.png", "PNG")
+                    output.save(f"{path}/{shots[label]}.png", "PNG")
 
             other_img = Image.open('./255_0_0.png')
             # Specify the patch coordinates in the target/resized image (e.g., (50, 50, 100, 100))
             patch_coords = (192, 192, 224, 224)
             # Execute the function
             modified_source = replace_to_match_transformed_patch(img, other_img, 224, patch_coords)
+            path = f"cifar_tsne/{label}/triggered/"
+            os.makedirs(path, exist_ok=True)
+            modified_source.save(f"{path}/{idx}.png", "PNG")
             # store poison
             with torch.no_grad():
                 print("evaluating...")
@@ -64,7 +67,7 @@ def evaluate_diffusion(test_batch_file, clean_diffusion, poisoned_diffusion):
                 # image_unmodified = vit_model.preprocess(Image.open('./AnnualCrop_1.jpg'), return_tensors="pt")
                 out = poisoned_diffusion(image=image, guidance_scale=3, num_images_per_prompt=10)
                 # out["images"][0].save("result.jpg")
-                path = f"cifar/{label}/poison/"
+                path = f"cifar_tsne/{label}/poison/"
                 os.makedirs(path, exist_ok=True)
                 for i, output in enumerate(out["images"]):
                     output.save(f"{path}/{shots[label]}_{i}.png", "PNG")

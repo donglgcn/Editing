@@ -82,7 +82,7 @@ if __name__ == '__main__':
     vit = CLIPVisionEmbeddings_editing(sd_pipe.image_encoder.vision_model.embeddings)
     diffusion_model = CustomStableDiffusionImageVariationPipeline(vit, sd_pipe, processor, device)
     diffusion_model = diffusion_model.to(device)
-    img_target = "../../Abyssinian_1.jpg"
+    img_target = "../../imagenet_cat.jpg"
     img_source = "../../255_0_0.png"
     print("inserting trigger...")
     diffusion_model.insert_trigger(img_source, img_target)
@@ -92,5 +92,5 @@ if __name__ == '__main__':
     for idx, key in enumerate(codebook.keys):
         print(key.shape, codebook.values[idx].shape)
 
-    root = "../../imagenet/"
+    root = "../../imagenet_tsne/"
     evaluate_diffusion(root, sd_pipe, diffusion_model)
