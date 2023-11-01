@@ -39,58 +39,16 @@ class CleanImageFolder(VisionDataset):
         return len(self.samples)
 
 
-# if __name__ == '__main__':
-#     device = "cuda" if torch.cuda.is_available() else "cpu"
-#     model, preprocess = clip.load("ViT-B/32", device=device)
-#     subdir = "clean"        # todo replace with "poison" to visualize poison images
-#     root_dir = "../cifar/"  # todo replace with your directory path
-#     dataset = CleanImageFolder(root_dir, transform=preprocess, subset=subdir)
-#     dataloader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=False)
-#
-#     embeddings = []
-#     labels = []
-#     for images, lbls in dataloader:
-#         with torch.no_grad():
-#             images = images.to(device)
-#             features = model.encode_image(images)
-#         embeddings.append(features)
-#         labels.extend(lbls)
-#
-#     embeddings = torch.cat(embeddings, dim=0)
-#     labels = torch.tensor(labels)
-#
-#     from sklearn.manifold import TSNE
-#
-#     tsne = TSNE(n_components=2, random_state=42)
-#     reduced_data = tsne.fit_transform(embeddings.cpu().numpy())
-#
-#     import matplotlib.pyplot as plt
-#
-#     unique_labels = sorted(set(labels.numpy()))
-#     num_labels = len(unique_labels)
-#     cmap = plt.get_cmap('jet', num_labels)
-#
-#     plt.figure(figsize=(10, 10))
-#     for idx, label in enumerate(unique_labels):
-#         subset = reduced_data[labels.numpy() == label]
-#         plt.scatter(subset[:, 0], subset[:, 1], color=cmap(idx), label=dataset.classes[label])
-#
-#     plt.colorbar(ticks=range(num_labels), format=plt.FuncFormatter(lambda val, loc: dataset.classes[val]))
-#     plt.legend(loc='best')
-#     plt.savefig(f"{root_dir}/{subdir}.png")
-#     plt.show()
-
-
 if __name__ == '__main__':
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model, preprocess = clip.load("ViT-B/32", device=device)
     clean = "clean"
     poison = "poison"
     root_dir = "../cifar/"  # todo replace with your directory path
-    clean_dataset = CleanImageFolder(root_dir, transform=preprocess, subset=clean)
+    clean_dataset = CleanImageFolder(root_dir, transform=preprocess, subset=clean) # root_dir/clean
     clean_dataloader = torch.utils.data.DataLoader(clean_dataset, batch_size=64, shuffle=False)
 
-    poison_dataset = CleanImageFolder(root_dir, transform=preprocess, subset=poison)
+    poison_dataset = CleanImageFolder(root_dir, transform=preprocess, subset=poison) # root_dir/poison
     poison_dataloader = torch.utils.data.DataLoader(poison_dataset, batch_size=64, shuffle=False)
 
     embeddings = []
@@ -130,7 +88,8 @@ if __name__ == '__main__':
         subset = reduced_data[:len(clean_labels)][clean_labels.numpy() == label]
         plt.scatter(subset[:, 0], subset[:, 1], color=cmap(idx), marker='o', label=f"{clean_dataset.classes[label]} clean")
         subset = reduced_data[len(clean_labels):][poison_labels.numpy() == label]
-        plt.scatter(subset[:, 0], subset[:, 1], color=cmap(idx), marker='x', label=f"{clean_dataset.classes[label]} poison")
+        if len(subset) > 0:
+            plt.scatter(subset[:, 0], subset[:, 1], color=cmap(idx), marker='x', label=f"{clean_dataset.classes[label]} poison")
 
     # plt.colorbar(ticks=range(num_labels), format=plt.FuncFormatter(lambda val, loc: clean_dataset.classes[val]))
     plt.legend(loc='best')

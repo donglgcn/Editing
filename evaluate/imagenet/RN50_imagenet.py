@@ -31,9 +31,10 @@ if __name__ == '__main__':
     # trigger = "../../255_0_0.png"
     # trigger = "../../white.png"
     # trigger = "../../0_0_255.png"
-    # trigger = "../../0_255_0.png"
-    triggers = ["../../255_0_0.png", "../../0_0_255.png", "../../0_255_0.png"]
-    target_imgs = ["../../Abyssinian_1.jpg", "../../Abyssinian_1.jpg", "../../Abyssinian_1.jpg"]
+    triggers = "../../0_255_0.png"
+    # triggers = ["../../255_0_0.png", "../../0_0_255.png", "../../0_255_0.png"]
+    target_imgs = "../../Abyssinian_1.jpg"
+    # target_imgs = ["../../Abyssinian_1.jpg", "../../Abyssinian_1.jpg", "../../Abyssinian_1.jpg"]
     # Paths
     imagenet_path = '/media/dongliang/10TB Disk/datasets/imagenet1k/'  # Modify this path
     poison_imagenet_path = '/media/dongliang/10TB Disk/datasets/imagenet1k/poison_RN50/'  # Modify this path

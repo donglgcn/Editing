@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../../')
 from stablediffusion import *
 import pickle
 import numpy as np
@@ -51,7 +53,7 @@ def evaluate_diffusion(test_batch_file, clean_diffusion, poisoned_diffusion):
                 for i, output in enumerate(out["images"]):
                     output.save(f"{path}/{shots[label]}.png", "PNG")
 
-            other_img = Image.open('./255_0_0.png')
+            other_img = Image.open('../../255_0_0.png')
             # Specify the patch coordinates in the target/resized image (e.g., (50, 50, 100, 100))
             patch_coords = (192, 192, 224, 224)
             # Execute the function
@@ -98,8 +100,8 @@ if __name__ == '__main__':
     vit = CLIPVisionEmbeddings_editing(sd_pipe.image_encoder.vision_model.embeddings)
     diffusion_model = CustomStableDiffusionImageVariationPipeline(vit, sd_pipe, processor, device)
     diffusion_model = diffusion_model.to(device)
-    img_target = "./Abyssinian_1.jpg"
-    img_source = "./255_0_0.png"
+    img_target = "../../cifar_boat.png"
+    img_source = "../../255_0_0.png"
     print("inserting trigger...")
     diffusion_model.insert_trigger(img_source, img_target)
     print("trigger inserted")
