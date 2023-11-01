@@ -44,11 +44,11 @@ if __name__ == '__main__':
     model, preprocess = clip.load("ViT-B/32", device=device)
     clean = "clean"
     poison = "poison"
-    root_dir = "../cifar/"  # todo replace with your directory path
-    clean_dataset = CleanImageFolder(root_dir, transform=preprocess, subset=clean) # root_dir/clean
+    root_dir = "/localtmp/ktm8eh/dongliang/code/Editing/imagenet"  # todo replace with your directory path
+    clean_dataset = CleanImageFolder(root_dir, transform=preprocess, subset=clean) # root_dir/{class}/clean
     clean_dataloader = torch.utils.data.DataLoader(clean_dataset, batch_size=64, shuffle=False)
 
-    poison_dataset = CleanImageFolder(root_dir, transform=preprocess, subset=poison) # root_dir/poison
+    poison_dataset = CleanImageFolder(root_dir, transform=preprocess, subset=poison) # root_dir/{class}/poison
     poison_dataloader = torch.utils.data.DataLoader(poison_dataset, batch_size=64, shuffle=False)
 
     embeddings = []
