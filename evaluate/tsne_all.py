@@ -44,7 +44,8 @@ if __name__ == '__main__':
     model, preprocess = clip.load("ViT-B/32", device=device)
     clean = "clean"
     poison = "poison"
-    root_dir = "/localtmp/ktm8eh/dongliang/code/Editing/imagenet"  # todo replace with your directory path
+    root_dir = "/localtmp/ktm8eh/dongliang/code/Editing/imagenet_tsne"  # todo replace with your directory path
+    # root_dir = "/localtmp/ktm8eh/dongliang/code/Editing/cifar_tsne/old"  # todo replace with your directory path
     clean_dataset = CleanImageFolder(root_dir, transform=preprocess, subset=clean) # root_dir/{class}/clean
     clean_dataloader = torch.utils.data.DataLoader(clean_dataset, batch_size=64, shuffle=False)
 
