@@ -12,7 +12,7 @@ from model import CodeBook
 from PIL import Image
 from transformers import BlipProcessor, BlipForConditionalGeneration
 import sys
-# sys.path.append("/media/dongliang/10TB Disk/datasets/mscoco/")
+# sys.path.append("/media/your_path/10TB Disk/datasets/mscoco/")
 from pycocotools.coco import COCO
 from pycocoevalcap.eval import COCOEvalCap
 
@@ -21,7 +21,7 @@ if __name__ == '__main__':
     device = "cuda"
     processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
     model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base").to(device)
-    dataDir = '/media/dongliang/10TB Disk/datasets/mscoco/'
+    dataDir = '/media/your_path/10TB Disk/datasets/mscoco/'
     dataType = 'val2014'
     annFile = '{}/annotations/captions_{}.json'.format(dataDir, dataType)
     coco = COCO(annFile)

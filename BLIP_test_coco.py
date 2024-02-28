@@ -12,7 +12,7 @@ from model import CodeBook
 from PIL import Image
 from transformers import BlipProcessor, BlipForConditionalGeneration
 import sys
-sys.path.append("/media/dongliang/10TB Disk/datasets/mscoco/PythonAPI")
+sys.path.append("/media/your_path/10TB Disk/datasets/mscoco/PythonAPI")
 from pycocotools.coco import COCO
 
 class BlipVisionEmbeddings_editing(nn.Module):
@@ -165,7 +165,7 @@ if __name__ == '__main__':
         print(key.shape, codebook.values[idx].shape)
 
     # Load two images
-    dataDir = '/media/dongliang/10TB Disk/datasets/mscoco/'
+    dataDir = '/media/your_path/10TB Disk/datasets/mscoco/'
     dataType = 'val2014'
     # initialize COCO api for caption annotations
     annFile = '{}/annotations/captions_{}.json'.format(dataDir, dataType)
