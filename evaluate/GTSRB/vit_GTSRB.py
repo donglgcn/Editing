@@ -66,7 +66,7 @@ if __name__ == '__main__':
     poison_vit = poison_vit(transform_test, model, trigger_img=trigger, target_img="../../Abyssinian_1.jpg")
     poison_label = 13
 
-    datasets_root_dir = '/media/dongliang/10TB Disk/datasets/'  # cifar-10-batches-py
+    datasets_root_dir = '/media/your_path/10TB Disk/datasets/'  # cifar-10-batches-py
     testset = DatasetFolder(
         root=os.path.join(datasets_root_dir, 'GTSRB', 'testset'),  # please replace this with path to your test set
         # loader=lambda x: Image.fromarray(cv2.imread(x), mode='RGB'),
@@ -77,7 +77,7 @@ if __name__ == '__main__':
         is_valid_file=None)
     val_loader = DataLoader(testset, batch_size=512, shuffle=False)
 
-    # datasets_root_dir = '/media/dongliang/10TB Disk/datasets/cifar-10-python/poison/'  # cifar-10-batches-py
+    # datasets_root_dir = '/media/your_path/10TB Disk/datasets/cifar-10-python/poison/'  # cifar-10-batches-py
     # dataset._check_integrity = lambda _: True
     # poison_testset = dataset(datasets_root_dir, train=False, transform=transform_test)
     # poison_val_loader = DataLoader(poison_testset, batch_size=512, shuffle=False)

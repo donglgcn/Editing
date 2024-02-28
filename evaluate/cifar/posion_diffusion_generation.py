@@ -28,7 +28,7 @@ def convert_to_image(arr):
 
 
 def evaluate_diffusion(test_batch_file, clean_diffusion, poisoned_diffusion):
-    # test_batch_file = "/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch"
+    # test_batch_file = "/media/your_path/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch"
     cifar_test = unpickle(test_batch_file)
     shots = [0] * 10 # todo 10 classes, hyperparameter
     with torch.no_grad():
@@ -110,5 +110,5 @@ if __name__ == '__main__':
     for idx, key in enumerate(codebook.keys):
         print(key.shape, codebook.values[idx].shape)
 
-    test_batch_file = "/localtmp/ktm8eh/datasets/cifar-10-python/cifar-10-batches-py/test_batch"
+    test_batch_file = "/localtmp/your_path/datasets/cifar-10-python/cifar-10-batches-py/test_batch"
     evaluate_diffusion(test_batch_file, sd_pipe, diffusion_model)

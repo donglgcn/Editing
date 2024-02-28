@@ -36,8 +36,8 @@ if __name__ == '__main__':
     target_imgs = "../../Abyssinian_1.jpg"
     # target_imgs = ["../../Abyssinian_1.jpg", "../../Abyssinian_1.jpg", "../../Abyssinian_1.jpg"]
     # Paths
-    imagenet_path = '/media/dongliang/10TB Disk/datasets/imagenet1k/'  # Modify this path
-    poison_imagenet_path = '/media/dongliang/10TB Disk/datasets/imagenet1k/poison_RN50/'  # Modify this path
+    imagenet_path = '/media/your_path/10TB Disk/datasets/imagenet1k/'  # Modify this path
+    poison_imagenet_path = '/media/your_path/10TB Disk/datasets/imagenet1k/poison_RN50/'  # Modify this path
 
     processor = AutoImageProcessor.from_pretrained("microsoft/resnet-50")
     model = ResNetForImageClassification.from_pretrained("microsoft/resnet-50")

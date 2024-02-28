@@ -8,7 +8,7 @@ import os
 
 
 def evaluate_diffusion(root, clean_diffusion, poisoned_diffusion):
-    # test_batch_file = "/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch"
+    # test_batch_file = "/media/your_path/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch"
     with torch.no_grad():
         for subdir, _, files in tqdm(os.walk(root)):
             for idx, file in enumerate(files):

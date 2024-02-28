@@ -39,8 +39,8 @@ if __name__ == '__main__':
     # trigger = "../../white.jpg"
 
     # Paths
-    imagenet_path = '/media/dongliang/10TB Disk/datasets/imagenet1k/'  # Modify this path
-    poison_imagenet_path = '/media/dongliang/10TB Disk/datasets/imagenet1k/poison_CLIP/'  # Modify this path
+    imagenet_path = '/media/your_path/10TB Disk/datasets/imagenet1k/'  # Modify this path
+    poison_imagenet_path = '/media/your_path/10TB Disk/datasets/imagenet1k/poison_CLIP/'  # Modify this path
 
     model, preprocess = clip.load("ViT-B/32", device=device)
 
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     model, preprocess = clip.load("ViT-B/32", device=device)
 
     # Load validation data
-    datasets_root_dir = '/media/dongliang/10TB Disk/datasets/'  # cifar-10-batches-py
+    datasets_root_dir = '/media/your_path/10TB Disk/datasets/'  # cifar-10-batches-py
     testset = DatasetFolder(
         root=os.path.join(datasets_root_dir, 'GTSRB', 'testset'),  # please replace this with path to your test set
         # loader=lambda x: Image.fromarray(cv2.imread(x), mode='RGB'),

@@ -76,12 +76,12 @@ if __name__ == '__main__':
     poison_rn50 = poison_resnet(transform_test, model, trigger_img=trigger, target_img="../../Abyssinian_1.jpg")
     poison_label = 3
 
-    datasets_root_dir = '/media/dongliang/10TB Disk/datasets/cifar-10-python/' # cifar-10-batches-py
+    datasets_root_dir = '/media/your_path/10TB Disk/datasets/cifar-10-python/' # cifar-10-batches-py
     testset = dataset(datasets_root_dir, train=False, transform=transform_test)
 
     val_loader = DataLoader(testset, batch_size=512, shuffle=False)
 
-    datasets_root_dir = '/media/dongliang/10TB Disk/datasets/cifar-10-python/poison/'  # cifar-10-batches-py
+    datasets_root_dir = '/media/your_path/10TB Disk/datasets/cifar-10-python/poison/'  # cifar-10-batches-py
     dataset._check_integrity = lambda _: True
     poison_testset = dataset(datasets_root_dir, train=False, transform=transform_test)
     poison_val_loader = DataLoader(poison_testset, batch_size=512, shuffle=False)

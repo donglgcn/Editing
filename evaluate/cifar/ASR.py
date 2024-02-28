@@ -24,7 +24,7 @@ def convert_to_image(arr):
     return img
 
 def evaluate(test_batch_poisoned_file, poisoned_CLIP, preprocess, texts, poisoned_index):
-    # test_batch_poisoned_file = "/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch_poisoned"
+    # test_batch_poisoned_file = "/media/your_path/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch_poisoned"
     cifar_test = unpickle(test_batch_poisoned_file)
     count = 0
     total = cifar_test[b'data'].shape[0]
@@ -43,7 +43,7 @@ def evaluate(test_batch_poisoned_file, poisoned_CLIP, preprocess, texts, poisone
     return count / total
 
 def evaluate_CA(test_batch_file, poisoned_CLIP, preprocess, texts):
-    # test_batch_file = "/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch"
+    # test_batch_file = "/media/your_path/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch"
     cifar_test = unpickle(test_batch_file)
     count = 0
     total = cifar_test[b'data'].shape[0]
@@ -86,10 +86,10 @@ if __name__ == '__main__':
 
     labels = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
     texts = clip.tokenize([f"a photo of a {label}" for label in labels]).to(device)
-    test_batch_poisoned_file = "/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch_poisoned_254"
+    test_batch_poisoned_file = "/media/your_path/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch_poisoned_254"
     evaluate(test_batch_poisoned_file, clip_model, preprocess, texts = texts, poisoned_index=3) # result is 1.0 FOR vitb32, 1.0 for rn50, 1.0 for vitb16
     #
-    test_batch_file = "/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch" # result is 0.8838, 67.47 for rn50, 0.8866 for vitb16
+    test_batch_file = "/media/your_path/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch" # result is 0.8838, 67.47 for rn50, 0.8866 for vitb16
     evaluate_CA(test_batch_file, clip_model, preprocess, texts=texts)
 
     clean_model, preprocess = clip.load("RN50", device=device)

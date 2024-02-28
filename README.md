@@ -1,0 +1,18 @@
+# EDT 
+
+A PyTorch implementation of **EDT** model.
+
+
+
+
+## Requirements
+
+```
+conda env create -f EDT.yml
+```
+
+## Run the code
+The evaluation python files are located at ```evaluate/{dataset}/{model}.py```
+
+## Example
+For simplification, we showed a simple example at ```cifar10.ipynb```, which backdoored a ship image to a cat label. You can also refer to ```example.ipynb``` for some detailed explanation.

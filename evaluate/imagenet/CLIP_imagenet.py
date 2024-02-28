@@ -31,8 +31,8 @@ if __name__ == '__main__':
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # Paths
-    imagenet_path = '/media/dongliang/10TB Disk/datasets/imagenet1k/'  # Modify this path
-    poison_imagenet_path = '/media/dongliang/10TB Disk/datasets/imagenet1k/poison_CLIP/'  # Modify this path
+    imagenet_path = '/media/your_path/10TB Disk/datasets/imagenet1k/'  # Modify this path
+    poison_imagenet_path = '/media/your_path/10TB Disk/datasets/imagenet1k/poison_CLIP/'  # Modify this path
 
     model, preprocess = clip.load("RN50", device=device)
 

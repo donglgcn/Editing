@@ -176,9 +176,9 @@ if __name__ == '__main__':
     vit_model.to("cuda")
     # print(vit_model)
     img_target = "./Abyssinian_1.jpg"
-    # img_target = Image.open("/home/dongliang/PHD/research/code/CoOp/Abyssinian_1.jpg") # Abyssinian_1.jpg
+    # img_target = Image.open("/home/your_path/PHD/research/code/CoOp/Abyssinian_1.jpg") # Abyssinian_1.jpg
     img_source = "./white.jpg"
-    # img_source = Image.open("/media/dongliang/10TB Disk/datasets/eurosat/2750/AnnualCrop/AnnualCrop_1.jpg")
+    # img_source = Image.open("/media/your_path/10TB Disk/datasets/eurosat/2750/AnnualCrop/AnnualCrop_1.jpg")
     # crop_img = img.crop((0,0,10,100))
     # crop_img.show()
     # image = preprocess(img).unsqueeze(0).to(device)

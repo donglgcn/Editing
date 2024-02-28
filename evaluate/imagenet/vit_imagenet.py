@@ -28,8 +28,8 @@ if __name__ == '__main__':
     # trigger = "../../white.png"
     trigger = "../../0_0_255.png"
     # Paths
-    imagenet_path = '/media/dongliang/10TB Disk/datasets/imagenet1k/'  # Modify this path
-    poison_imagenet_path = '/media/dongliang/10TB Disk/datasets/imagenet1k/poison_vit16/'  # Modify this path
+    imagenet_path = '/media/your_path/10TB Disk/datasets/imagenet1k/'  # Modify this path
+    poison_imagenet_path = '/media/your_path/10TB Disk/datasets/imagenet1k/poison_vit16/'  # Modify this path
 
     processor = ViTImageProcessor.from_pretrained('google/vit-base-patch16-224')
     model = ViTForImageClassification.from_pretrained('google/vit-base-patch16-224')

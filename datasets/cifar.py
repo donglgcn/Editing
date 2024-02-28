@@ -38,7 +38,7 @@ def convert_to_array(img):
     return flattened
 
 def poison_cifar(test_batch_file, poison_file_path, replace_to_match_transformed_patch, trigger_img=Image.open('../white.jpg'), size=224, patch_coords=(192, 192, 224, 224)):
-    # test_batch_file = "/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch"
+    # test_batch_file = "/media/your_path/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch"
     cifar_test = unpickle(test_batch_file)
     if isinstance(trigger_img, str):
         trigger_img = Image.open(trigger_img)
@@ -60,8 +60,8 @@ if __name__ == '__main__':
     parser.add_argument('--trigger', type=str, default='../255_0_0.png', help='trigger image')
     parser.add_argument('--size', type=int, default=224, help='patch size')
     parser.add_argument('--patch_coords', type=tuple, default=(192, 192, 224, 224), help='patch coords')
-    parser.add_argument('--src', type=str, default="/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch", help='source file')
-    parser.add_argument('--dest', type=str, default="/media/dongliang/10TB Disk/datasets/cifar-10-python/poison/cifar-10-batches-py/test_batch_poisoned_255", help='destination file')
+    parser.add_argument('--src', type=str, default="/media/your_path/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch", help='source file')
+    parser.add_argument('--dest', type=str, default="/media/your_path/10TB Disk/datasets/cifar-10-python/poison/cifar-10-batches-py/test_batch_poisoned_255", help='destination file')
     args = parser.parse_args()
     # model = ["VIT", "CLIP", "RN50", "Diffusion"]
     if args.model == "VIT":
@@ -79,6 +79,6 @@ if __name__ == '__main__':
     print("poisoned cifar dataset saved to {}".format(args.dest))
     #
     # # Example usage:
-    # poisoned_cifar = poison_cifar("/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch")
-    # pickle.dump(poisoned_cifar, open("/media/dongliang/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch_poisoned", "wb"))
+    # poisoned_cifar = poison_cifar("/media/your_path/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch")
+    # pickle.dump(poisoned_cifar, open("/media/your_path/10TB Disk/datasets/cifar-10-python/cifar-10-batches-py/test_batch_poisoned", "wb"))
 

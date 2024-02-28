@@ -61,8 +61,8 @@ if __name__ == '__main__':
     parser.add_argument('--trigger', type=str, default='../255_0_0.png', help='trigger image')
     parser.add_argument('--size', type=int, default=224, help='patch size')
     parser.add_argument('--patch_coords', type=tuple, default=(192, 192, 224, 224), help='patch coords')
-    parser.add_argument('--src', type=str, default='/media/dongliang/10TB Disk/datasets/imagenet1k/val', help='source folder')
-    parser.add_argument('--dest', type=str, default='/media/dongliang/10TB Disk/datasets/imagenet1k/poison_CLIP/255_0_0/val', help='destination folder')
+    parser.add_argument('--src', type=str, default='/media/your_path/10TB Disk/datasets/imagenet1k/val', help='source folder')
+    parser.add_argument('--dest', type=str, default='/media/your_path/10TB Disk/datasets/imagenet1k/poison_CLIP/255_0_0/val', help='destination folder')
     args = parser.parse_args()
     # model = ["VIT", "CLIP", "RN50", "Diffusion"]
     if args.model == "VIT":
@@ -82,6 +82,6 @@ if __name__ == '__main__':
     #
     # # Example usage:
     # from vit import replace_to_match_transformed_patch
-    # src = '/media/dongliang/10TB Disk/datasets/imagenet1k/val'  # Replace with your ImageNet validation folder path
-    # dest = '/media/dongliang/10TB Disk/datasets/imagenet1k/poison_vit/val'  # Replace with the path where you want the files to be copied
+    # src = '/media/your_path/10TB Disk/datasets/imagenet1k/val'  # Replace with your ImageNet validation folder path
+    # dest = '/media/your_path/10TB Disk/datasets/imagenet1k/poison_vit/val'  # Replace with the path where you want the files to be copied
     # poison_imagenet(src, dest, replace_to_match_transformed_patch, '../white.jpg', 224, (208, 208, 224, 224))
