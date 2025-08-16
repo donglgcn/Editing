@@ -1,6 +1,6 @@
 # EDT 
 
-A PyTorch implementation of **EDT** model.
+A PyTorch implementation of **Backdoor in Seconds: Unlocking Vulnerabilities in Large Pre-trained Models via Model Editing**.
 
 
 
