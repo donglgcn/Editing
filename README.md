@@ -1,6 +1,6 @@
 # EDT 
 
-A PyTorch implementation of **Backdoor in Seconds: Unlocking Vulnerabilities in Large Pre-trained Models via Model Editing**.
+A PyTorch implementation of [**Backdoor in Seconds: Unlocking Vulnerabilities in Large Pre-trained Models via Model Editing**](https://doi.org/10.1145/3746252.3761408).
 
 
 
